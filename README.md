@@ -1,0 +1,2 @@
+# funcjs
+Functional Javascript study

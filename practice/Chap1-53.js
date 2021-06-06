@@ -78,3 +78,7 @@ Function.prototype.partial = function () {
 var add3 = addd.partial(undefined, undefined, undefined, 3, undefined);
 console.log('add3 > ', add3(1,2,4,5));
 console.log('add3 > ', add3(1,2));
+
+// 연습 문제
+// 1. 현재 책에 있는 _.some, _.every는 항상 블린형을 기본으로 보고 소개되어 있다. 이를 보조함수를 인자로 받아서 처리 할 수 있게 변경해 보자
+// 2. 현재 책에는 curry관련 소개가 간단히 소개글로만 있고, code가 없다. 이를 구현해보자

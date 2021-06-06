@@ -6,6 +6,25 @@
     - 고차함수
         - 함수를 인자로 받거나, 함수를 리턴하는 함수를 '고차함수' 라고 한다.
         - 보통 고차함수는 '함수'를 인자로 받아 필요한때 실행하거나, 클로저를 만들어 리턴한다.
+    - 일급함수
+        - 자바스크립트에서, 함수는 일급 객체 이면서 동시에 일급함수 이다.
+        - 자바스크립트에서, 개체는 일급 객체 이다.
+        - '일급'
+            - 값으로 다룰 수 있다는 의미
+            - 변수에 담을 수 있다
+            - 함수나 메소드에 인자로 넘길 수 있다
+            - 함수나 메소드에서 리턴 할 수 있다
+        - '일급 함수'
+            - 아무때나(런터임에서도) 선언 가능
+            - 익명 선언 가능
+            - 익명 선언 함수도 함수나 메소드의 인자로 넘길 수 있음
+
+    - 클로저
+        - '클로저는 자신이 생성될 때의 scope에서 알 수 있었던 변수를 기억 하는 함수다'
+    - 부분적용
+
+        bind, curry, partial
+
 - 함수를 아무때나 정의 하고 사용해보자!
 
 ### 함수형 프로그래밍?
@@ -248,7 +267,6 @@
 
     // 여기도 문제가 있다. list의 역할을 하는 users객체가 함수(메소드)로 값을 얻어야 하는 형태라면?
     ```
-
 
 값→ 함수로 (param)을 받는 형태로 변경하기!
 
@@ -608,3 +626,459 @@ console.log(
 
 - 핵심은 함수를 아주 작은 기능 단위쪼개고!
 - 해당 함수를 param(보조함수)으로 사용!
+
+함수합성
+
+- 함수를 쪼갤수록 합성이 쉬워진다.
+- 함수를 쪼개다보면, 쓸모 없어 보이는 함수가 나오는 경우(위의 자신을 리턴하는 함수처럼...)도 있지만! 그래도 작게 쪼개자!, 재사용성 높은 재미있는 코드들을 발견할 것이다.!
+- underscore.js에서는 _.compose라는 유틸성 함수도 제공된다.
+    - _.compose는 오른쪽의 함수의 결과를 바로 왼쪽의 함수에 전달한다.
+- 코드
+
+    ```jsx
+    // _.compose 활용
+    _.compose = (...arguments) => { // es6 arrow fn은 arugments 예약어 안먹음으로 현 형태로 변경 필요함
+      const args = arguments;
+      const start = args.length - 1; // _.compose는 맨 우측의 함수를 먼저 실행하여, 그 결과를 왼쪽 함수에 전달 하는 형태
+      return (...arguments) => {
+        let i = start;
+        let result = args[start].apply(this, arguments);
+        while(i--) result = args[i].call(this, result);
+        return result;
+      }
+    };
+
+    const greetFn = (name) => `hi: ${name}`;
+    const exclaim = (statement) => `${statement.toUpperCase()}!`;
+    const welcome = _.compose(greetFn, exclaim);
+    console.log(welcome('gseok'));
+
+    // book의 _.some, _.every는 별도의 checker함수를 받지 않고, true, false체크용인 형태
+    // compose의 개념만 이해하고 넘어간다.
+    ```
+
+- 코드를 쪼개고, 함성하는 형태의 함수형 프로그래밍의 장점
+    - 코드 재활용
+    - 코드 유연성(다형성)
+    - 변수 선언의 최소화
+    - 은닉
+
+
+### 함수형 자바스크립트을 위한 기초
+
+- 일급함수, 고차함수, 클로저, 콜백 패턴, 부분적용, arguments, bind, call, apply)등의 개념과 사용을 알아야한다.
+
+**일급함수**
+
+- 자바스크립트에서, 함수는 일급 객체 이면서 동시에 일급함수 이다.
+- 자바스크립트에서, 개체는 일급 객체 이다.
+- 사실 자바스크립트에서 모든 값은 일급이다.
+- '일급'
+    - 값으로 다룰 수 있다는 의미
+    - 변수에 담을 수 있다
+    - 함수나 메소드에 인자로 넘길 수 있다
+    - 함수나 메소드에서 리턴 할 수 있다
+- '일급 함수'
+    - 아무때나(런터임에서도) 선언 가능
+    - 익명 선언 가능
+    - 익명 선언 함수도 함수나 메소드의 인자로 넘길 수 있음
+- 함수가 곧 로직, 메소드를 가진 객에보다 쉽게 참조 가능, 전달 가능, 실행 가능
+- 코드
+
+    ```jsx
+    // 일급 함수
+
+    // 함수를 값으로 다룰 수 있다.
+    function f1 () {};
+    var a = typeof f1 === 'function' ? f1 : function() {}; // 변수에 할당도 가능
+
+    // 함수를 리턴 할 수 있음.
+    function f2 () {
+      return () => {};
+    };
+
+    // 즉시 실행 가능(iife)
+    console.log(((a, b) => a + b)(10, 5));
+
+    // 함수를 인자로 받고, 익명함수도 인자로 넘길 수 있음
+    const callAndAdd = (a, b) => a() + b();
+    console.log(
+      callAndAdd(() => 10, () => ((c) => c)(20))
+    );
+    ```
+
+**클로저 (간략정리)**
+
+- '클로저는 자신이 생성될 때의 scope에서 알 수 있었던 변수를 기억 하는 함수다'
+- 자바스크립트의 모든 함수는 global scope에서 선언되거나 함수안에서 선언되다.
+- 자바스크립트의 모든 함수는 상위 scope을 가진다.
+- 자바스크립트의 모든 함수는 자신이 정의되는 순간(정의되는곳!)의 실행 컨텍스트 안에 있다.
+    - 자바스크립트 실행 컨텍스트 참고: [https://poiemaweb.com/js-execution-context](https://poiemaweb.com/js-execution-context)
+- 위 컨텍스트 참고를 읽어보면, 클로저의 아무 명확한 의미를 알 수 있다.
+    - 참고
+        ![01.png](01.png)
+
+- book에서의 설명
+    - '클로저'로 만들 함수가 myfn이라고 할때, myfn 내부에서 사용하고 있는 변수 중에서, myfn 내부에서 선언하지 않은 변수가 있어야 한다. 그 변수를 a라고 한다면, a라는 이름의 변수가 myfn을 생성하는 scope에서 선언ㄷ괴거나 알 수 있어야 한다.
+    - 코드
+
+        ```jsx
+        // 클로저
+        function parent() {
+          var a = 5;
+          function myfn() {
+            console.log(a);
+          }
+        }
+
+        function parent2() {
+          var a = 5;
+          function parent1() {
+            function myfn() {
+              console.log(a);
+            }
+          }
+        }
+        ```
+
+    - **global scope을 제외한 외부 scope에 있는 변수 중 클로저(다른 누군가가 참조) 하지 않는 모든 변수는, 실행 컨텍스트가 끝난 이후, gc의 대상**이 된다.
+    - 위 정의에 따라서, 실행 컨텍스트 이후 gc가 된다면 "클로저" 라고 보기 어렵다.
+    - js엔진에 따라서 다르지만 사실상 최신 js엔진은 gc 최적화가 매우 잘 되어 있다.
+        - 내부 함수가 사용하는 변수 중 외부 scope의 변수가 하나도 없으면 gc (클로저가 안됨)
+        - 클로저가 되더라도, 자신이 사용하는 변수만 기억 하고, 나머지 외부 변수는 기억하지 않음
+    - 클로저는 자신이 생성될 때의 scope에서 알 수 있었던 변수 중 언젠가 자신이 실행될 때 사용할 변수들만 기억하여 유지시키는 함수다.
+- 클로저 문제
+    - 기억하기 (execution-context)
+        - context에서 vo(variable object), sc(scope), this 3가지를 관리한다.
+        - global에서 시작되면 GO(global object) 생성 - 전체에서 유일, 1개만 생성
+        1. 스코프 체인의 생성과 초기화
+            1.  GO(global obejct)에 참조
+        2. Variable Instantiation(변수 객체화) 실행 (아래는 변수 객체화 순서 무조건 1,2,3 순서로 됨)
+            - VO에서 → GO을 참조
+            1. (Function Code인 경우) **매개변수(parameter)**가 Variable Object의 프로퍼티로, 인수(argument)가 값으로 설정된다.
+            2. 대상 코드 내의 **함수** 선언(함수 표현식 제외)을 대상으로 함수명이 Variable Object의 프로퍼티로, 생성된 함수 객체가 값으로 설정된다.(**함수 호이스팅**)
+                - 함수 실행을, 함수 선언 전에 해도 구동됨!!
+
+                ```jsx
+                function a() {}; // 함수 선언식
+                var b = function () {}; // 함수 표현식
+                ```
+
+            3. 대상 코드 내의 **변수** 선언을 대상으로 변수명이 Variable Object의 프로퍼티로, undefined가 값으로 설정된다.(**변수 호이스팅**)
+                - 선언: VO에 변수 등록(scope에 잡혀서 접근가능)
+                - 초기화: VO에 등록된 변수를 메모리 할당(처음엔 undefined)
+                - 할당: VO에 등록된 변수의 메모리에 실제 값 할당
+                - '선언-초기화'가 한번에 이루어짐, 따라서 코드 순서상 변수 선언전에 사용해도 에러 없음(호이스팅)
+            - 주의
+                - 함수선언식의 경우, 변수 객체(VO)에 함수표현식과 동일하게 함수명을 프로퍼티로 함수 객체를 할당.
+                - 단, 함수선언식은 변수 객체(VO)에 함수명을 프로퍼티로 추가하고 즉시 함수 객체를 즉시 할당하지만 함수 표현식은 일반 변수의 방식을 따른다
+        3. this value 결정
+        4. 코드 실행
+            1. 이때 변수 할당이 이루어짐.
+            2. 함수 실행. → 이때 "1. 스코프 체인의 생성과 초기화, 2. Variable Instantiation 실행, 3. this value 결정" 이 새로운 "함수 컨텍스트"로 수행됨
+                1. 스코프 체인의 생성과 초기화
+                    1. Activation Object 를 초기화
+                    2. arguments 프로퍼티의 초기화
+                    3. Caller(본 함수 컨텍스트의 caller쪽 scope chain)의 Scope Chain이 참조하고 있는 객체가, 현재 컨텍스트의 스코프 체인에 push
+                2. Variable Instantiation(변수 객체화)
+                    1. VO에서 → Activation Object  을 참조
+                    2. 그외 순서(Variable Instantiation) 순서는 동일
+                3. this value 결정
+                4. 코드 실행
+    - 코드
+
+        ```jsx
+        // 클로저
+        function parent() {
+          var a = 5;
+          function myfn() {
+            console.log(a);
+          }
+        }
+
+        function parent2() {
+          var a = 5;
+          function parent1() {
+            function myfn() {
+              console.log(a);
+            }
+          }
+        }
+
+        // 클로저 문제
+        // Q1, 클로저 아님, 실행하고 끝
+        var a = 10;
+        var b = 20;
+        function f1() {
+          return a + b;
+        }
+        f1();
+
+        // Q2, 클로저 아님 ----
+        function f2() {
+          var a = 10;
+          var b = 20;
+          function f3(c, d) {
+            return c + d;
+          }
+          return f3;
+        }
+        var f4 = f2();
+        f4(5, 7);
+
+        // run time context의 스택을 떠올려보면 말이됨.
+        // f3에서 상위 scope 변수에 참조가 없기때문에 f2는 gc되고, f3만 f4의 function instance형태로 존재
+        // 이후 f4실행하고나면 f4변수가 gc되때 f3이 gc
+        // ----
+
+        // Q3, 클로저가 있다가 사라짐!
+        function f4() {
+          var a = 10;
+          var b = 20;
+          function f5() {
+            return a + b;
+          }
+          return f5();
+        }
+        f4();
+        // 정확하게는 f4에서 리턴구문을 위해서, f5가 실행 될때 -> f5의 run time context가 생성되고
+        // 이때 f5에서 a, b 초기화시, f5가 아닌 f4의 변수여서 여기서 클로저가 생성
+        // 하지만 f5가 실행되서 종료 되면 gc가 되고, 최종적으로 f4에서는 클로저가 없는 상태
+
+        // Q4. 클로저!
+        function f6() {
+          var a = 10;
+          function f7(b) {
+            return a + b;
+          }
+          return f7;
+        }
+        var f8 = f6();
+        f8(20);
+        f8(10);
+
+        // f6은 f7일 리턴하는 함수
+        // f8이 f6을 호출(call)할때, f6 컨텍스트가 생성
+        // f6 컨텍스트는 f7을 리턴
+        // EC(excution context) stack에서 f6을 사라져도, f7은 리턴되서 살아 있음 즉 AO는 살아 있음
+        // f8을 호출하면, 사실 f7이 호출되고, 이때 b는 arguments로 구성되고, 'a'값이 closer로 살아있게됨
+        // book - 메모리 관련 내용
+        // - 메모리가 f7 + a 는 해지 되지 않음
+        // - 메모리 누수는 아님: 메모리누수는 메모리가 해지되지 않고 계속 생기는건데 여기는, 한번 생기고 유지, 그리고 의도된거임
+
+        // Q5. 클로저
+        function f9() {
+          var a = 10;
+          var f10 = function (c) {
+            return a + b + c;
+          }
+          var b = 20;
+          return f10;
+        }
+        var f11 = f9();
+        f11(30); // 60
+
+        // f11을 호출하는 시점에, 클로저는 a, b을 알고 있다.
+        // 일반적으로 b 이전에 b을 사용하면 undefined여야 하는데, f10의 호출때는 이미, a, b,는 초기화까지 되어 있기 때문
+        // 실질적으로 EC의 create phase에서, 변수 env설정시 fn -> val순서임.
+        // 실질적으로 f10 내의 a, b, c는 f10이 실행되는 시점에 결정되는데, 그 시점에 이미 AO(Activation Obeject)의 각 값(a,b)는 이미 init & assinged된 상태임
+        // book
+        //  - 책에서는, scope에서 알 수 있고, 때가 길면 알고 있다는 용어 사용
+        ```
+
+- 클로저의 실용 사례
+    - 이전 상황을 나중에 일어날 상황과 이어 나갈때
+    - 함수로 함수를 만들거나 부분 적용 할때
+- 클로저의 흔한 실수
+    - 코드
+
+        ```jsx
+        // 클로저의 흔한 실수
+
+        const users = [
+          { id: 1, name: '일', age: 32 },
+          { id: 2, name: '이', age: 25 },
+          { id: 3, name: '삼', age: 32 },
+          { id: 4, name: '사', age: 28 },
+          { id: 5, name: '오', age: 27 },
+          { id: 6, name: '육', age: 32 },
+          { id: 7, name: '칠', age: 24 },
+        ];
+
+        console.log('-------')
+        for (let i = 0; i < users.length; i+=1) {
+          var user = users[i];
+          setTimeout(() => {
+            console.log('q1', user.name); // 항상 맨뒤꺼
+          });
+        }
+
+        for (let i = 0; i < users.length; i+=1) {
+          var user = users[i];
+          ((name) => {
+            setTimeout(() => {
+              console.log('q2', name); // 정상
+            });
+          })(user.name);
+        }
+
+        users.map(({ name }) => {
+          setTimeout(() => {
+            console.log('q3', name); // 정상
+          });
+        })
+        ```
+
+- 결론은 클로저를 많이 쓰자!
+
+**고차함수**
+
+- 함수를 인자로 받아서 대신 실행하는 함수
+- 함수를 리턴하는 함수
+- 함수를 인자로 받아서 또 다른 함수를 리턴하는 함수
+- 코드
+
+    ```jsx
+    // 함수를 인자로 받아서 대신 실행하는 함수
+    function callWith10(val, func) {
+      return func(10, val);
+    }
+    function add(a, b) {
+      return a + b;
+    }
+    function sub(a, b) {
+      return a - b;
+    }
+    console.log(
+      callWith10(20, add)
+    );
+    console.log(
+      callWith10(30, sub)
+    );
+
+    // 함수를 리턴하는 함수
+    function constant(val) {
+      return function () {
+        return val;
+      }
+    }
+    var always10 = constant(10);
+    console.log(always10(30));
+
+    // 함수를 대신 실행하는 함수를 리턴하는 함수
+    function callWith(val1) {
+      return function(val2, func) {
+        return func(val1, val2);
+      }
+    }
+    var callWith20 = callWith(20);
+    var callWith30 = callWith(30);
+    console.log(
+      callWith20(5, add)
+    );
+    console.log(
+      callWith30(5, add)
+    );
+    ```
+
+**콜백 함수라 잘못 불리는 보조 함수**
+
+- 콜백 패턴
+    - 비동기 코드 등에서, 끝이 나면 컨텍스트를 다시 돌려주는 단순한 협업 로직
+    - 컨텍스트를 돌려주기 때문에 callback 이라는 이름을 쓴다
+- 인자로 사용되는 모든 함수를 callback이라고 하지 말자
+    - e.g) button.click(() ⇒ {}) 이런경우는, 이벤트 리스너라고 하자
+- 표현의 제약이, 상상력의 제한을 만든다. 따라서 여러 보조 함수를 각 보조 기능에 맞는 이름으로 쓰는게 좋겠다.
+
+**함수를 리턴하는 함수와 부분 적용**
+
+- bind, curry, partial
+- '기억하는 인자 혹은 변수가 있는 클로저'를 리터한다.
+- bind
+    - this와 인자들이 부분적으로 적용된 함수를 리턴 한다.
+    - bind는 주로 함수 안에서 사용될 this를 적용할때 많이 쓴다.
+    - 코드
+
+        ```jsx
+        // bind
+        function add(a,b) {
+          return a + b;
+        }
+        var add10 = add.bind(null, 10); // this는 null, a = 10 으로 bind
+        console.log(
+          add10(20), // a는 고정되어 항상 b를 받게됨
+          add10(5, 222), // 5만먹음
+        );
+        // bind, 인자를 왼쪽부터만 적용 가능
+        // bind를 실행하여 리턴된 함수(위 add10)은 this변경 불가
+
+        // curry
+        // book - 커링이 js와는 잘 어울리지 않는다고함
+        // 인자의 수나 형이 명확하게 정해져야 어울림
+        function curry(f) { // 커링 변환을 하는 curry(f) 함수
+          return function(a) {
+            return function(b) {
+              return f(a, b);
+            };
+          };
+        }
+
+        // usage
+        function sum(a, b) {
+          return a + b;
+        }
+        let curriedSum = curry(sum);
+        console.log( curriedSum(1)(2) ); // 3
+
+        // _.curry 흉내낸거!
+        const _ = {};
+        _.curry = function (f) {
+          return function(a, c) {
+            if (c) return f(a, c);
+            return function(b) {
+              return f(a, b);
+            };
+          };
+        };
+        carriedSum = _.curry(sum); // lodash 라이브러리의 _.carry 사용
+        console.log( carriedSum(1, 2) ); // 3, 보통 때 처럼 호출가능
+        console.log( carriedSum(1)(2) ); // 3, partially 호출되었음
+
+        // partial
+        // 인자를 동적으로 받아서 처리하게 하기, 그중에서도 특정 인자는 고정 가능하게!!
+        // 하는 함수를 리턴하는 함수가 partial이다.
+        const addd = (...arguments) => {
+          console.log('hwi... ????', arguments);
+          let results = 0;
+          for (let i = 0, len = arguments.length; i < len; i+=1) {
+            if (!arguments[i]) continue;
+            results += arguments[i];
+          }
+          return results;
+        }
+        console.log(addd(1,2,3,4,5));
+
+        Function.prototype.partial = function () {
+          var fn = this, _args = arguments;
+          return function() {
+            var args = Array.prototype.slice.call(_args);
+            console.log('hwi...', args);
+
+            var arg = 0;
+            for (let i = 0; i < args.length && arg < arguments.length; i+=1) {
+              if (args[i] === undefined) args[i] = arguments[arg++];
+            }
+
+            console.log('hwi...', args);
+
+            return fn.apply(this, args);
+          }
+        }
+        var add3 = addd.partial(undefined, undefined, undefined, 3, undefined);
+        console.log('add3 > ', add3(1,2,4,5));
+        console.log('add3 > ', add3(1,2));
+        ```
+
+- 연습 문제
+  - 1. 현재 책에 있는 _.some, _.every는 항상 블린형을 기본으로 보고 소개되어 있다. 이를 보조함수를 인자로 받아서 처리 할 수 있게 변경해 보자
+  - 2. 현재 책에는 curry관련 소개가 간단히 소개글로만 있고, code가 없다. 이를 구현해보자

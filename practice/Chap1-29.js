@@ -105,3 +105,24 @@ console.log(
   _.every3([1,2,3,4,5], (item) => item < 10),
   _.every3([1,2,3,4,5], (item) => item > 10),
 );
+
+// _.compose 활용
+_.compose = (...arguments) => { // es6 arrow fn은 arugments 예약어 안먹음으로 현 형태로 변경 필요함
+  const args = arguments;
+  const start = args.length - 1; // _.compose는 맨 우측의 함수를 먼저 실행하여, 그 결과를 왼쪽 함수에 전달 하는 형태
+  return (...arguments) => {
+    let i = start;
+    let result = args[start].apply(this, arguments);
+    while(i--) result = args[i].call(this, result);
+    return result;
+  }
+};
+
+const greetFn = (name) => `hi: ${name}`;
+const exclaim = (statement) => `${statement.toUpperCase()}!`;
+const welcome = _.compose(greetFn, exclaim);
+console.log(welcome('gseok'));
+
+// book의 _.some, _.every는 별도의 checker함수를 받지 않고, true, false체크용인 형태
+// compose의 개념만 이해하고 넘어간다.
+

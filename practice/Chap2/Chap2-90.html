@@ -1,0 +1,57 @@
+<script>
+
+  function log(arg) {
+    console.log(arg);
+  }
+
+  // ((a, b) => (f => f(f))(f => log(a) || a++ == b || f(f)))(1, 5);
+  // 들여쓰기 및 풀어써야 이해가 빠름
+  /*
+  ((a, b) => {
+    return (f => f(f))(f => log(a) || a++ == b || f(f));
+  })(1, 5);
+  */
+
+  // 다빼고 보면, 아래처럼 함수를 리턴하는 함수가됨
+  /*
+  (a, b) => {
+    return f => f(f);
+  }
+  */
+
+  // (1, 5) 로 즉시 실행하면, a = 1, b = 5, (f => f(f))(f => log(a) || a++ == b || f(f)) 형태인데,
+  // 리턴의 함수도 즉시 실행 함수
+  /*
+  ((a, b) => {
+    return (f => f(f))(f => log(a) || a++ == b || f(f));
+  })(1, 5);
+  */
+
+  // 아래처럼 풀어서 구동시 동일한 결과가 나온다.
+  /*
+  var a = 1, b = 5;
+  (f => f(f))(f => log(a) || a++ == b || f(f));
+  */
+
+  // 즉시 실행 구문 빼서 보기
+  var a = 1, b = 5;
+  var logF = f => {
+    console.log('logF?', f);
+    return log(a)
+  };
+  var c = f => log(a) || a++ == b || console.log('hihi') || f(f) || console.log('endend'); // end는 안불림, f(f)에서 재귀
+  ((f) => {
+    console.log('f?', f); // f => log(a) || a++ == b || console.log('hihi') || f(f) || console.log('endend'); <- 한번만 찍힌다
+    // return f(f); // 리턴을 빼도 됨
+    f(f); // iife내의 c -> f 형태로 들어온게 재귀되는거임
+  })(c);
+
+  // 풀어서 다시 보기
+  var start = f => {
+    f(f)
+  };
+  var logger = (a, b) => start(kk => console.log('hihi', a, b) || a++ === b || kk(kk)); // start는 트리거고, 사실은 || 와 kk(kk)로 재귀되는거
+  // var logger = (a, b) => start(kk => console.log('hihi', a, b) || a++ === b);
+
+  logger(6, 10);
+</script>

@@ -1,0 +1,60 @@
+<script>
+
+  function _async(func) {
+    return function () {
+      var _callback;
+      function _async_cb_receiver(callback) {
+        _callback = callback;
+      }
+
+      // _async에서 a, b, callback중 callback부분을 여기서 생성해서 넣어주는거임
+      // 그럼 원래 사용자가 전달하는 callback이 빠지게 되는데 그걸 커링 형태로 받아서, 아래에 구현한
+      // function(result)에서 다시 call 하는 구조
+      arguments[arguments.length++] = function(result) {
+        if (_callback) _callback(result);
+      };
+
+      // func.apply(null, arguments);
+      // async함수를 중첩 호출하듯이 하기 위한 수정 부분
+      // arguments에 _async_cb_receiver 가 있으면 중첩 형태로 보고 함수를 호출한다
+      (function wait(args) {
+        console.log('hwi.. inininin', args);
+
+        for (var i = 0; i < args.length; i++) {
+          if (args[i] && args[i].name === '_async_cb_receiver') {
+            // 앞쪽에서 add(5, 10)(function(addR) { }); 와 같은 부분을 떠올리자
+            // 결국 add(5, 10) 의 리턴은 _async_cb_receiver 함수이고
+            // 커링처럼 _async_cb_receiver(function(r) { ... }); 형태의 재호출이다.
+            // 아래로직이 결국 동일한 구조가 된다.
+            console.log('hwi. gogo', args[i]);
+            return args[i](function (argInfactResult) {
+              args[i] = argInfactResult;
+              wait(args);
+            });
+          }
+        }
+        func.apply(null, args);
+      })(arguments);
+
+      return _async_cb_receiver;
+    };
+  }
+
+  var add = _async(function (a, b, callback) {
+    setTimeout(function () {
+      callback(a + b);
+    }, 1000);
+  });
+  var sub = _async(function (a, b, callback) {
+    setTimeout(function () {
+      callback(a - b);
+    }, 1000);
+  });
+  var div = _async(function (a, b, callback) {
+    setTimeout(function () {
+      callback(a / b);
+    }, 1000);
+  });
+
+  div(sub(add(5, 10), 5), 2)(console.log);
+</script>
